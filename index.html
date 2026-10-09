@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>MazzNote</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ───────── Barra lateral: cuadernos y sus hojas ───────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Cuadernos">
+      <div class="side-head">
+        <h1 class="brand" aria-label="MazzNote">
+          <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H9a3 3 0 0 1-3-3z"/><path d="M10 8h5M10 12h5"/><path d="M6 17.500H4M6 12H4M6 6.500H4"/></svg>
+          <span class="brand-name">Mazz<span class="brand-thin">Note</span></span>
+        </h1>
+        <button type="button" class="btn primary" id="btnNewNotebook" title="Crear un cuaderno nuevo">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Cuaderno
+        </button>
+      </div>
+      <input type="search" id="search" class="field" placeholder="Buscar en las hojas…" aria-label="Buscar hojas" autocomplete="off">
+      <ul class="tree" id="tree"></ul>
+      <button type="button" class="btn sm side-foot" id="btnPerf" title="Ver cuánta memoria y procesador está usando la app">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 1 18 0"/><path d="M12 12l4-4"/><circle cx="12" cy="12" r="1.200"/></svg>
+        Recursos
+      </button>
+    </aside>
+
+    <!-- ───────── Zona principal ───────── -->
+    <main class="main">
+      <div class="chrome-top" id="chromeTop">
+      <header class="toolbar" role="toolbar" aria-label="Herramientas">
+        <button type="button" class="btn icon" id="btnSidebar" title="Mostrar u ocultar los cuadernos" aria-label="Cuadernos">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="group seg" role="group" aria-label="Modo de escritura">
+          <button type="button" class="seg-btn" data-mode="text" title="Escribir con el teclado (Alt+T)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+            <span>Teclado</span>
+          </button>
+          <button type="button" class="seg-btn" data-mode="pen" title="Escribir a lápiz (Alt+P)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Lápiz</span>
+          </button>
+          <button type="button" class="seg-btn" data-mode="eraser" title="Borrador (Alt+E)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21h10"/><path d="M5.5 13.5 14 5a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 18H8l-2.5-2.5a2 2 0 0 1 0-2z"/><path d="M9 10l5 5"/></svg>
+            <span>Borrador</span>
+          </button>
+          <button type="button" class="seg-btn" data-mode="lasso" title="Lazo: rodea trazos para moverlos, cambiarles el tamaño, copiarlos o borrarlos (Alt+L)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4C7.600 4 4 6.200 4 9s3.600 5 8 5 8-2.200 8-5-3.600-5-8-5z" stroke-dasharray="3.500 2.500"/><path d="M9.500 13.500c-1.200 2-1 4.200.6 5.500 1.100.9 2.500.8 3.400-.2"/></svg>
+            <span>Lazo</span>
+          </button>
+        </div>
+
+        <!-- Opciones del lápiz -->
+        <div class="group" id="penOpts">
+          <div class="swatches" id="swatches" role="group" aria-label="Color del lápiz">
+            <label class="swatch custom" title="Otro color">
+              <input type="color" id="penColor" value="#1f2937" aria-label="Elegir otro color">
+            </label>
+          </div>
+          <label class="slider" title="Grosor del trazo">
+            <span>Grosor</span>
+            <input type="range" id="penSize" min="1" max="14" step="0.5" value="3">
+          </label>
+          <label class="inline" title="Tipo de pincel">
+            <span>Pincel</span>
+            <select id="brush" class="field">
+              <option value="pen">Lápiz</option>
+              <option value="marker">Marcador</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Opciones del borrador -->
+        <div class="group" id="eraserOpts" hidden>
+          <div class="seg small" role="group" aria-label="Tipo de borrador">
+            <button type="button" class="seg-btn" data-eraser="stroke" title="Borra el trazo completo que toques">Trazo</button>
+            <button type="button" class="seg-btn" data-eraser="area" title="Borra solo la parte que pasa bajo la goma">Área</button>
+          </div>
+          <label class="slider" title="Tamaño de la goma">
+            <span>Tamaño</span>
+            <input type="range" id="eraserSize" min="10" max="80" step="1" value="30">
+          </label>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="group">
+          <button type="button" class="btn icon" id="btnUndo" title="Deshacer en la hoja activa (Ctrl/Cmd+Z)" aria-label="Deshacer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+          <button type="button" class="btn icon" id="btnRedo" title="Rehacer (Ctrl/Cmd+Shift+Z)" aria-label="Rehacer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <button type="button" class="btn icon" id="btnClear" title="Limpiar la hoja activa" aria-label="Limpiar la hoja">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+
+        <button type="button" class="btn" id="btnGuide" title="Guía: todos los comandos y ajustes (Alt+G)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.400-1 .9-1 1.700"/><line x1="12" y1="17" x2="12.010" y2="17"/></svg>
+          Guía
+        </button>
+
+        <details class="menu" id="exportMenu">
+          <summary class="btn" title="Exportar o importar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </summary>
+          <div class="menu-pop">
+            <p class="menu-label">Hoja activa</p>
+            <button type="button" data-action="png">Imagen (PNG)</button>
+            <button type="button" data-action="json">Archivo de hoja (JSON)</button>
+            <hr>
+            <button type="button" data-action="copy" title="Copia la hoja activa al portapapeles, lista para pegar (Alt+C)">Copiar como imagen</button>
+            <button type="button" data-action="share" title="Abre el menú de compartir del sistema: AirDrop, Mensajes, Mail…">Compartir imagen…</button>
+            <button type="button" data-action="copy-both" data-two hidden>Copiar ambas hojas</button>
+            <button type="button" data-action="share-both" data-two hidden>Compartir ambas hojas…</button>
+            <hr>
+            <button type="button" data-action="import">Importar hoja (JSON)…</button>
+          </div>
+        </details>
+        <input type="file" id="fileImport" accept=".json,application/json" hidden>
+      </header>
+
+      <!-- Opciones de la hoja y de la vista -->
+      <div class="toolbar sub" aria-label="Opciones de la hoja">
+        <label class="inline">
+          <span>Fondo</span>
+          <select id="selStyle" class="field">
+            <option value="ruled">Rayado</option>
+            <option value="grid">Cuadriculado</option>
+            <option value="dots">Puntos</option>
+            <option value="blank">Blanco</option>
+          </select>
+        </label>
+        <label class="inline">
+          <span>Renglón</span>
+          <select id="selSpacing" class="field">
+            <option value="24">Pequeño</option>
+            <option value="32">Medio</option>
+            <option value="40">Grande</option>
+          </select>
+        </label>
+        <label class="inline">
+          <span>Papel</span>
+          <select id="selColor" class="field">
+            <option value="white">Blanco</option>
+            <option value="cream">Crema</option>
+          </select>
+        </label>
+        <label class="check" title="Papel y trazos en versión oscura (solo en este cuaderno). Negro → blanco, rojo → verde lima, azul → fucsia…">
+          <input type="checkbox" id="darkMode"> <span>Modo oscuro</span>
+        </label>
+
+        <div class="seg small" role="group" aria-label="Vista">
+          <button type="button" class="seg-btn" data-view="book" title="Dos hojas a la vez, como un libro abierto">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C4.5 4 8 4 12 6c4-2 7.5-2 10-.5V19c-2.500-1.500-6-1.500-10 .5-4-2-7.500-2-10-.5z"/><line x1="12" y1="6" x2="12" y2="19.500"/></svg>
+            Libro
+          </button>
+          <button type="button" class="seg-btn" data-view="single" title="Una sola hoja">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
+            Una hoja
+          </button>
+        </div>
+
+        <div class="seg small" role="group" aria-label="Orientación de la hoja activa" id="orientSeg" title="Orientación de la hoja activa">
+          <button type="button" class="seg-btn" data-orient="portrait" title="Poner solo la hoja activa en vertical">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2"/></svg>
+            Vertical
+          </button>
+          <button type="button" class="seg-btn" data-orient="landscape" title="Poner solo la hoja activa en horizontal: va sola, con el lienzo completo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/></svg>
+            Horizontal
+          </button>
+        </div>
+
+        <div class="group" role="group" aria-label="Gestos del lápiz">
+          <label class="check" title="Mantén el lápiz quieto al terminar una línea, círculo, caja o triángulo y se vuelve perfecto. Quieto un poco más, la línea pasa a flecha">
+            <input type="checkbox" id="gestHold"> <span>Enderezar</span>
+          </label>
+          <label class="check" title="Un zigzag rápido sobre lo escrito lo borra (con el marcador no se aplica)">
+            <input type="checkbox" id="gestScratch"> <span>Tachar</span>
+          </label>
+        </div>
+
+        <div class="spacer"></div>
+
+        <label class="inline" title="Suaviza el temblor de la mano al dibujar: cuanto más fuerte, más se redondea el trazo (Alt+S lo enciende y lo apaga)">
+          <span>Estabilizador</span>
+          <select id="stabSel" class="field">
+            <option value="0">Apagado</option>
+            <option value="1">Suave</option>
+            <option value="2">Medio</option>
+            <option value="3">Fuerte</option>
+          </select>
+        </label>
+        <label class="check" title="Cambia a lápiz cuando el lápiz toca la hoja y a teclado cuando escribes">
+          <input type="checkbox" id="autoSwitch"> <span>Cambio automático</span>
+        </label>
+        <label class="check" title="Los dedos no dibujan: solo desplazan la hoja (evita marcas con la palma)">
+          <input type="checkbox" id="penOnly"> <span>Solo lápiz</span>
+        </label>
+      </div>
+
+      <!-- Cuaderno abierto -->
+      <div class="bookbar">
+        <button type="button" class="nb-title" id="nbName" title="Cambiar el nombre del cuaderno"></button>
+        <span class="spread-info" id="spreadInfo"></span>
+        <button type="button" class="btn sm" id="btnIndex" title="Índice: todas las hojas del cuaderno con su miniatura (Alt+I)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.500" cy="6" r="1"/><circle cx="4.500" cy="12" r="1"/><circle cx="4.500" cy="18" r="1"/></svg>
+          Índice
+        </button>
+        <span class="spacer"></span>
+
+        <span class="ruler-read" id="rulerRead" hidden></span>
+        <button type="button" class="btn icon sm" id="btnRuler" title="Regla: tiras en centímetros para medir la hoja" aria-label="Regla" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.500 15.500 3 21 8.500 8.500 21z"/><path d="M7 11.500l2 2M10 8.500l2 2M13 5.500l1.500 1.500M10 14.500l2 2M7.500 17.500l1.500 1.500" /></svg>
+        </button>
+        <div class="zoom" role="group" aria-label="Acercamiento">
+          <button type="button" class="btn icon sm" id="zoomOut" title="Alejar (Ctrl/Cmd −)" aria-label="Alejar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button type="button" class="zoom-label" id="zoomLabel" title="Ver la página completa (Ctrl/Cmd 0)">100%</button>
+          <button type="button" class="btn icon sm" id="zoomIn" title="Acercar (Ctrl/Cmd +)" aria-label="Acercar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
+          </button>
+          <button type="button" class="btn icon sm" id="zoomFit" title="Ajustar: ver la página completa sin desplazarse" aria-label="Ajustar a la pantalla">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+          <button type="button" class="btn icon sm" id="zoomWidth" title="Ajustar al ancho" aria-label="Ajustar al ancho">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="7 8 3 12 7 16"/><polyline points="17 8 21 12 17 16"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+          </button>
+        </div>
+        <button type="button" class="btn icon sm" id="btnAddSpace" title="Alargar las hojas visibles (añadir espacio al final)" aria-label="Añadir espacio">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="4" x2="12" y2="16"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="20" x2="19" y2="20"/></svg>
+        </button>
+        <span class="status" id="saveStatus" role="status" aria-live="polite"></span>
+      </div>
+      </div>
+
+      <div class="stage-wrap" id="stageWrap">
+        <div class="ruler-corner" id="rulerCorner" hidden>cm</div>
+        <canvas class="ruler ruler-h" id="rulerH" aria-hidden="true" hidden></canvas>
+        <canvas class="ruler ruler-v" id="rulerV" aria-hidden="true" hidden></canvas>
+        <div class="stage" id="stage">
+          <div class="spread" id="spread" data-layout="book"></div>
+        </div>
+      </div>
+
+      <!-- Carrusel de hojas -->
+      <nav class="carousel" aria-label="Hojas del cuaderno">
+        <button type="button" class="btn icon" id="btnPrev" title="Hojas anteriores (Alt+←)" aria-label="Hojas anteriores">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="car-track" id="carTrack" role="list"></div>
+        <button type="button" class="btn icon" id="btnNext" title="Hojas siguientes (Alt+→)" aria-label="Hojas siguientes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </nav>
+    </main>
+  </div>
+
+  <!-- Plantilla de una hoja (se crean dos: izquierda y derecha del libro) -->
+  <template id="pageTpl">
+    <section class="page">
+      <header class="page-head">
+        <span class="page-num"></span>
+        <input type="text" class="page-title" placeholder="Título de la hoja (opcional)" aria-label="Título de la hoja" maxlength="120" autocomplete="off">
+        <time class="page-date"></time>
+        <span class="page-tools">
+          <button type="button" class="page-btn page-rot" title="Girar solo esta hoja a horizontal" aria-label="Girar esta hoja">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-15.500-6.200L3 8"/><polyline points="3 3 3 8 8 8"/><path d="M3 12a9 9 0 0 0 15.500 6.200L21 16"/><polyline points="21 21 21 16 16 16"/></svg>
+          </button>
+          <button type="button" class="page-btn page-prev" title="Mover la hoja una posición atrás" aria-label="Mover la hoja atrás">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button type="button" class="page-btn page-next" title="Mover la hoja una posición adelante" aria-label="Mover la hoja adelante">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button type="button" class="page-btn page-clear" title="Limpiar esta hoja: quita sus trazos (o el texto) y conserva la hoja" aria-label="Limpiar esta hoja">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.500 4.500 12 12"/><path d="M11 10.500 13.500 13a3.500 3.500 0 0 1-3.500 3.500H4.500c1.500-1 1.800-2 1.800-3.500A3.500 3.500 0 0 1 11 10.500z"/><path d="M9 16.500v3M6.500 16.500l-.5 3"/></svg>
+          </button>
+          <button type="button" class="page-btn page-del" title="Eliminar esta hoja" aria-label="Eliminar esta hoja">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </span>
+      </header>
+      <div class="frame">
+        <div class="sheet" data-mode="text">
+          <canvas class="paper" aria-hidden="true"></canvas>
+          <textarea rows="1" spellcheck="false" aria-label="Texto de la hoja" placeholder="Escribe aquí · toca otro punto para escribir allí · o usa el lápiz…"></textarea>
+          <div class="tboxes"></div>
+          <canvas class="ink" aria-label="Trazos de lápiz"></canvas>
+          <div class="eraser-cursor" aria-hidden="true"></div>
+        </div>
+        <div class="empty-slot">
+          <button type="button" class="btn primary add-page">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Añadir hoja
+          </button>
+        </div>
+        <div class="sel-bar" role="toolbar" aria-label="Selección" hidden>
+          <span class="sel-colors"></span>
+          <button type="button" class="sel-btn" data-sel="dup" title="Duplicar (Ctrl/Cmd+D)" aria-label="Duplicar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button type="button" class="sel-btn danger" data-sel="del" title="Eliminar (Supr)" aria-label="Eliminar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <!-- Diálogo: limpiar hoja -->
+  <dialog id="clearDialog">
+    <form method="dialog">
+      <h2>Limpiar la hoja</h2>
+      <p id="clearMsg">¿Qué quieres borrar de la hoja activa?</p>
+      <div class="dlg-actions">
+        <button value="strokes" class="btn">Solo trazos</button>
+        <button value="text" class="btn">Solo texto</button>
+        <button value="all" class="btn danger">Todo</button>
+        <button value="cancel" class="btn" autofocus>Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo: confirmar -->
+  <dialog id="confirmDialog">
+    <form method="dialog">
+      <h2 id="confirmTitle">¿Seguro?</h2>
+      <p id="confirmMsg"></p>
+      <div class="dlg-actions">
+        <button value="ok" class="btn danger" id="confirmOk">Aceptar</button>
+        <button value="cancel" class="btn" autofocus>Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo: nombre de cuaderno -->
+  <dialog id="nameDialog">
+    <form method="dialog">
+      <h2 id="nameTitle">Cuaderno</h2>
+      <label class="name-field">
+        <span>Nombre</span>
+        <input type="text" id="nameInput" class="field" maxlength="60" autocomplete="off" placeholder="Por ejemplo: Dibujos">
+      </label>
+      <div class="dlg-actions">
+        <button value="ok" class="btn primary" id="nameOk">Guardar</button>
+        <button value="cancel" class="btn" formnovalidate>Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo: exportar imagen cuando hay dos hojas a la vista -->
+  <dialog id="exportDialog">
+    <form method="dialog">
+      <h2>Exportar como imagen</h2>
+      <p>Tienes dos hojas a la vista. ¿Cuál quieres exportar?</p>
+      <div class="dlg-actions stack">
+        <button value="active" class="btn primary" id="exportActiveBtn">Solo la hoja activa</button>
+        <button value="both-one" class="btn">Ambas, en una sola imagen</button>
+        <button value="both-two" class="btn">Ambas, en dos imágenes</button>
+        <button value="cancel" class="btn" autofocus>Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Menú de herramientas: clic derecho (o Alt+M) -->
+  <div class="ctx" id="ctxMenu" role="dialog" aria-label="Herramientas rápidas" hidden>
+    <button type="button" class="btn cm-joy" id="cmJoystick" aria-pressed="false" title="Joystick: un mando para desplazar la hoja con el lápiz. Aparece aquí y se cierra solo al seguir escribiendo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.500"/><path d="M12 5.500v2M12 16.500v2M5.500 12h2M16.500 12h2"/></svg>
+      <span class="cm-joy-main">Joystick</span>
+      <span class="cm-joy-hint">desplazar la hoja · o mantén <kbd>Ctrl</kbd> y mueve</span>
+    </button>
+    <div class="seg" role="group" aria-label="Modo">
+      <button type="button" class="seg-btn" data-cm-mode="text" title="Teclado (Alt+T)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg><span>Teclado</span>
+      </button>
+      <button type="button" class="seg-btn" data-cm-mode="pen" title="Lápiz (Alt+P)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Lápiz</span>
+      </button>
+      <button type="button" class="seg-btn" data-cm-mode="eraser" title="Borrador (Alt+E)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21h10"/><path d="M5.5 13.5 14 5a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 18H8l-2.5-2.5a2 2 0 0 1 0-2z"/><path d="M9 10l5 5"/></svg><span>Borrador</span>
+      </button>
+      <button type="button" class="seg-btn" data-cm-mode="lasso" title="Lazo (Alt+L)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4C7.600 4 4 6.200 4 9s3.600 5 8 5 8-2.200 8-5-3.600-5-8-5z" stroke-dasharray="3.500 2.500"/><path d="M9.500 13.500c-1.200 2-1 4.200.6 5.500 1.100.9 2.500.8 3.400-.2"/></svg><span>Lazo</span>
+      </button>
+    </div>
+
+    <div class="cm-section" id="cmPen">
+      <div class="cm-row">
+        <span class="cm-label">Pincel</span>
+        <div class="seg small" role="group" aria-label="Tipo de pincel">
+          <button type="button" class="seg-btn" data-cm-brush="pen" title="Lápiz: el grosor sigue la presión">Lápiz</button>
+          <button type="button" class="seg-btn" data-cm-brush="marker" title="Marcador: ancho y translúcido, para resaltar">Marcador</button>
+        </div>
+      </div>
+      <div class="cm-row">
+        <span class="cm-label">Color</span>
+        <div class="swatches" id="cmSwatches" role="group" aria-label="Color del lápiz">
+          <label class="swatch custom" title="Otro color"><input type="color" id="cmColor" value="#1f2937" aria-label="Elegir otro color"></label>
+        </div>
+        <input type="range" id="cmSize" min="1" max="14" step="0.5" value="3" title="Grosor del trazo" aria-label="Grosor">
+        <output id="cmSizeVal" title="Grosor"></output>
+      </div>
+    </div>
+
+    <div class="cm-section" id="cmEraser" hidden>
+      <div class="cm-row">
+        <span class="cm-label">Goma</span>
+        <div class="seg small" role="group" aria-label="Tipo de borrador">
+          <button type="button" class="seg-btn" data-cm-eraser="stroke">Trazo</button>
+          <button type="button" class="seg-btn" data-cm-eraser="area">Área</button>
+        </div>
+      </div>
+      <div class="cm-row">
+        <span class="cm-label">Tamaño</span>
+        <input type="range" id="cmEraserSize" min="10" max="80" step="1" value="30" aria-label="Tamaño de la goma">
+        <output id="cmEraserVal"></output>
+      </div>
+    </div>
+
+    <div class="cm-section" id="cmLasso" hidden>
+      <p class="cm-hint">Rodea lo que quieras seleccionar y arrástralo; tira de una esquina para cambiar su tamaño. <kbd>Supr</kbd> borra; <kbd>Ctrl/Cmd</kbd>+<kbd>C</kbd>, <kbd>X</kbd>, <kbd>V</kbd>, <kbd>D</kbd> copian, cortan, pegan y duplican.</p>
+    </div>
+
+    <div class="cm-row cm-actions">
+      <button type="button" class="btn" id="cmUndo" title="Deshacer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Deshacer
+      </button>
+      <button type="button" class="btn" id="cmRedo" title="Rehacer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Rehacer
+      </button>
+      <button type="button" class="btn" id="cmPaste" title="Pegar el texto del portapapeles en un cuadro de texto, aquí (Ctrl/Cmd+V)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>Pegar
+      </button>
+      <button type="button" class="btn icon" id="cmClear" title="Limpiar la hoja activa" aria-label="Limpiar la hoja">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>
+
+    <div class="cm-row cm-zoom">
+      <span class="cm-label">Zoom</span>
+      <button type="button" class="btn icon sm" id="cmZoomOut" title="Alejar" aria-label="Alejar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button type="button" class="zoom-label" id="cmZoomLabel" title="Ver la página completa">100%</button>
+      <button type="button" class="btn icon sm" id="cmZoomIn" title="Acercar" aria-label="Acercar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button type="button" class="btn sm" id="cmZoomFit" title="Ver la página completa sin desplazarse">Página</button>
+      <button type="button" class="btn sm" id="cmZoomWidth" title="Ajustar al ancho">Ancho</button>
+    </div>
+
+    <div class="cm-grid">
+      <button type="button" class="btn sm" id="cmLaser" title="Puntero láser: un punto que sigue al puntero y no deja marca (Alt+R)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.600 5.600l2.100 2.100M16.300 16.300l2.100 2.100M5.600 18.400l2.100-2.100M16.300 7.700l2.100-2.100"/></svg>Láser
+      </button>
+      <button type="button" class="btn sm" id="cmFocus" title="Modo enfoque: solo la hoja (Alt+F)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>Enfoque
+      </button>
+      <button type="button" class="btn sm" id="cmCopyImg" title="Copiar la hoja activa como imagen (Alt+C)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copiar
+      </button>
+      <button type="button" class="btn sm" id="cmShareImg" title="Compartir la hoja activa como imagen: AirDrop, Mensajes, Mail…">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Compartir
+      </button>
+    </div>
+  </div>
+
+  <!-- Selector de color de un cuaderno -->
+  <div class="popover" id="colorPop" role="dialog" aria-label="Color del cuaderno" hidden></div>
+
+  <!-- Diálogo: recursos en uso -->
+  <dialog id="perfDialog">
+    <form method="dialog">
+      <h2>Recursos en uso</h2>
+      <p>Lo que consume MazzNote ahora mismo. Se actualiza solo mientras esta ventana está abierta.</p>
+      <div class="perf-list" id="perfList"></div>
+      <p class="perf-tip" id="perfTip"></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn" id="perfClear" title="Libera la memoria de las miniaturas; se vuelven a dibujar al verlas">Vaciar miniaturas</button>
+        <button value="close" class="btn primary" autofocus>Cerrar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Índice del cuaderno -->
+  <dialog id="indexDialog" class="wide">
+    <div class="idx-head">
+      <span class="nb-dot" id="idxDot"></span>
+      <h2 id="idxTitle">Índice</h2>
+      <span class="idx-count" id="idxCount"></span>
+      <input type="search" id="idxFilter" class="field" placeholder="Filtrar por título, texto o fecha…" aria-label="Filtrar hojas" autocomplete="off">
+      <button type="button" class="btn icon" id="idxClose" title="Cerrar (Esc)" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="idx-grid" id="idxGrid"></div>
+  </dialog>
+
+  <!-- Modo enfoque: bordes sensibles para volver a ver las barras, y salida -->
+  <div class="edge edge-top" data-edge="top" title="Mostrar las barras"></div>
+  <div class="edge edge-left" data-edge="left" title="Mostrar los cuadernos"></div>
+  <div class="edge edge-bottom" data-edge="bottom" title="Mostrar las hojas"></div>
+  <button type="button" class="focus-exit" id="focusExit" title="Salir del modo enfoque (Alt+F)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+    Salir del enfoque
+  </button>
+
+  <!-- Joystick de desplazamiento -->
+  <div class="joystick" id="joystick" role="group" aria-label="Joystick de desplazamiento" hidden>
+    <div class="joy-bar">
+      <button type="button" class="joy-btn joy-grip" id="joyGrip" title="Arrastra para cambiarlo de sitio" aria-label="Mover el joystick">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
+      </button>
+      <span class="joy-title">Desplazar</span>
+      <button type="button" class="joy-btn" id="joyClose" title="Cerrar el joystick" aria-label="Cerrar el joystick">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="joy-pad" id="joyPad" title="Apoya el lápiz en la bola y arrástrala: cuanto más lejos, más rápido se desplaza la hoja">
+      <svg class="joy-arrows" viewBox="0 0 120 120" aria-hidden="true"><path d="M60 12l8 10H52z"/><path d="M60 108l8-10H52z"/><path d="M12 60l10-8v16z"/><path d="M108 60l-10-8v16z"/></svg>
+      <span class="joy-knob" id="joyKnob"></span>
+    </div>
+  </div>
+
+  <!-- Guía de comandos y ajustes -->
+  <dialog id="guideDialog" class="guide">
+    <div class="idx-head">
+      <h2>Guía de MazzNote</h2>
+      <span class="idx-count">Comandos, atajos y ajustes</span>
+      <button type="button" class="btn icon" id="guideClose" title="Cerrar (Esc)" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="g-tabs" id="guideTabs" role="tablist" aria-label="Secciones de la guía">
+      <button type="button" role="tab" data-g="g-write" aria-selected="true">Escribir</button>
+      <button type="button" role="tab" data-g="g-pen" aria-selected="false">Lápiz</button>
+      <button type="button" role="tab" data-g="g-lasso" aria-selected="false">Lazo</button>
+      <button type="button" role="tab" data-g="g-pages" aria-selected="false">Hojas</button>
+      <button type="button" role="tab" data-g="g-view" aria-selected="false">Vista</button>
+      <button type="button" role="tab" data-g="g-share" aria-selected="false">Archivos</button>
+      <button type="button" role="tab" data-g="g-perf" aria-selected="false">Rendimiento</button>
+    </div>
+    <div class="g-body" id="guideBody">
+
+      <section class="g-sec" id="g-write" role="tabpanel">
+        <div class="g-row"><div class="g-main"><b>Teclado</b><span class="g-keys"><kbd>Alt</kbd><kbd>T</kbd></span><p>Escribe con el teclado. El cuerpo del texto está en la primera línea.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Texto en cualquier parte</b><p>Con el modo Teclado, <em>haz clic donde quieras</em> (o toca con el lápiz) y escribe allí: aparece un cuadro de texto sobre ese renglón. Arrástralo por el asa ⠿ de su izquierda y ensánchalo con su borde derecho. Si lo dejas vacío, desaparece.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Lápiz</b><span class="g-keys"><kbd>Alt</kbd><kbd>P</kbd></span><p>Trazos a mano. Pincel (lápiz o marcador), color y grosor están en la barra y en el clic derecho. El grosor del lápiz sigue la presión si tu tableta la envía.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Borrador</b><span class="g-keys"><kbd>Alt</kbd><kbd>E</kbd></span><p><em>Trazo</em> borra el trazo completo que toques; <em>Área</em> borra solo lo que pasa bajo la goma. El extremo borrador del lápiz borra sin cambiar de modo.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Deshacer y rehacer</b><span class="g-keys"><kbd>Ctrl/⌘</kbd><kbd>Z</kbd></span><p>Con <kbd>Mayús</kbd> añadido, rehace. Cada hoja tiene su propio historial.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Pegar texto</b><span class="g-keys"><kbd>Ctrl/⌘</kbd><kbd>V</kbd></span><p>Pega el texto del portapapeles en un cuadro de texto, <em>donde está el puntero</em> (en un cuadro ya abierto, simplemente lo pega ahí). El botón «Pegar» del clic derecho lo pega en el punto donde lo abriste, útil con la tableta.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Limpiar la hoja</b><p>La escoba de la cabecera de cada hoja (o el cubo de la barra) quita los trazos y/o el texto de esa hoja. La hoja se conserva.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Cambio automático</b><p>Pasa a lápiz cuando el lápiz toca la hoja y a teclado cuando escribes una letra. Un toque corto del lápiz no dibuja: pone el cursor para escribir ahí.</p></div><label class="g-ctl check"><input type="checkbox" id="gAuto"> <span>Activo</span></label></div>
+        <div class="g-row"><div class="g-main"><b>Solo lápiz</b><p>Los dedos no dibujan, solo desplazan la hoja: así puedes apoyar la palma.</p></div><label class="g-ctl check"><input type="checkbox" id="gPenOnly"> <span>Activo</span></label></div>
+      </section>
+
+      <section class="g-sec" id="g-pen" role="tabpanel" hidden>
+        <div class="g-row"><div class="g-main"><b>Estabilizador</b><span class="g-keys"><kbd>Alt</kbd><kbd>S</kbd></span><p>Suaviza el temblor de la mano. Cuanto más fuerte, más se redondea el trazo y más se retrasa la línea respecto al lápiz. Está en la barra de opciones.</p></div>
+          <select class="field g-ctl" id="gStab" aria-label="Estabilizador"><option value="0">Apagado</option><option value="1">Suave</option><option value="2">Medio</option><option value="3">Fuerte</option></select></div>
+        <div class="g-row"><div class="g-main"><b>Mantener para enderezar</b><p>Termina una línea, círculo, elipse, caja o triángulo y deja el lápiz quieto medio segundo: se vuelve perfecto. En una recta, quieto un poco más la convierte en flecha, y puedes mover el lápiz para ajustar dónde termina.</p></div><label class="g-ctl check"><input type="checkbox" id="gHold"> <span>Activo</span></label></div>
+        <div class="g-row"><div class="g-main"><b>Tachar para borrar</b><p>Un zigzag rápido sobre lo escrito lo borra (se deshace con <kbd>Ctrl/⌘</kbd><kbd>Z</kbd>). No actúa con el marcador. Apágalo si sueles sombrear con zigzag sobre lo escrito.</p></div><label class="g-ctl check"><input type="checkbox" id="gScratch"> <span>Activo</span></label></div>
+        <div class="g-row"><div class="g-main"><b>Menú de herramientas</b><span class="g-keys">clic derecho · <kbd>Alt</kbd><kbd>M</kbd></span><p>Pincel, color, grosor, goma, deshacer, zoom y accesos justo donde está el puntero. Con <kbd>Mayús</kbd> + clic derecho sale el menú normal del navegador. Un botón del lápiz o una tecla exprés de tu tableta asignada a «clic derecho» lo abre en la punta.</p></div></div>
+      </section>
+
+      <section class="g-sec" id="g-lasso" role="tabpanel" hidden>
+        <div class="g-row"><div class="g-main"><b>Seleccionar</b><span class="g-keys"><kbd>Alt</kbd><kbd>L</kbd></span><p>Rodea con el lápiz lo que quieras, o toca un trazo. Arrastra dentro del marco para moverlo y tira de una esquina para cambiar su tamaño.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Barra de la selección</b><p>Cambia el color, duplica o elimina lo seleccionado.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Teclas</b><span class="g-keys"><kbd>Supr</kbd> <kbd>Ctrl/⌘</kbd><kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd> <kbd>D</kbd> <kbd>Esc</kbd></span><p>Borrar · copiar, cortar y pegar (también en otra hoja o cuaderno) · duplicar · soltar la selección.</p></div></div>
+      </section>
+
+      <section class="g-sec" id="g-pages" role="tabpanel" hidden>
+        <div class="g-row"><div class="g-main"><b>Pasar de hoja</b><span class="g-keys"><kbd>Alt</kbd><kbd>←</kbd> <kbd>→</kbd> · <kbd>RePág</kbd> <kbd>AvPág</kbd></span><p>También con las flechas y las miniaturas del carrusel inferior.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Índice del cuaderno</b><span class="g-keys"><kbd>Alt</kbd><kbd>I</kbd></span><p>Todas las hojas con miniatura, título y fecha; filtra y abre la que quieras. Botón «Índice» junto al nombre del cuaderno.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Buscar</b><p>El buscador de la barra lateral encuentra nombres de cuadernos, títulos y texto (también el de los cuadros de texto), sin importar tildes ni mayúsculas. Lo escrito a mano no se puede buscar: ponle un título a la hoja.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Reorganizar</b><p>▲ ▼ en la barra lateral y ‹ › en la cabecera de la hoja mueven una hoja de posición. El color de cada cuaderno se cambia con la paleta de su fila.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Orientación</b><p>El botón ⟳ de cada hoja (o Vertical / Horizontal en la barra) gira solo esa hoja. Una hoja horizontal va sola en pantalla.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Guardado</b><span class="g-keys"><kbd>Ctrl/⌘</kbd><kbd>S</kbd></span><p>Automático unos segundos después del último cambio.</p></div></div>
+      </section>
+
+      <section class="g-sec" id="g-view" role="tabpanel" hidden>
+        <div class="g-row"><div class="g-main"><b>Zoom</b><span class="g-keys"><kbd>Ctrl/⌘</kbd><kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd></span><p>También con Ctrl/⌘ + rueda o pellizco. «Página» ve la hoja entera; «Ancho» la ajusta al ancho.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Desplazarse con Ctrl</b><span class="g-keys"><kbd>Ctrl</kbd> + mover</span><p>Mantén <kbd>Ctrl</kbd> y mueve el puntero: la hoja sigue al puntero, como la lupa del sistema, y no se dibuja nada mientras la tengas pulsada. Cuanto más zoom, más rápido recorres la hoja.</p></div><label class="g-ctl check"><input type="checkbox" id="gCtrlPan"> <span>Activo</span></label></div>
+        <div class="g-row"><div class="g-main"><b>Joystick</b><p>Un mando para desplazar la hoja con el lápiz. Es la primera opción del menú del clic derecho: aparece donde hiciste clic y <em>se cierra solo al seguir escribiendo</em>. Apoya el lápiz en la bola y arrástrala: cuanto más lejos, más rápido.</p></div>
+          <div class="g-ctl g-pair"><select class="field" id="gJoySpeed" aria-label="Velocidad del joystick"><option value="1">Lento</option><option value="2">Normal</option><option value="3">Rápido</option></select>
+          <button type="button" class="btn sm" id="gJoyOpen">Abrir ahora</button></div></div>
+        <div class="g-row"><div class="g-main"><b>Regla</b><p>Tiras horizontal y vertical en centímetros (la hoja es proporción A4: 21 × 29,7 cm) alineadas con la hoja activa; junto a ellas se lee la posición del puntero. Botón de la regla, junto al zoom.</p></div><label class="g-ctl check"><input type="checkbox" id="gRuler"> <span>Mostrar</span></label></div>
+        <div class="g-row"><div class="g-main"><b>Modo enfoque</b><span class="g-keys"><kbd>Alt</kbd><kbd>F</kbd></span><p>Solo la hoja. Acerca el puntero a un borde para ver las barras; <kbd>Esc</kbd> sale.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Libro y una hoja</b><p>Dos hojas a la vez como un libro abierto, o una sola. Si la ventana es estrecha se muestra una sola.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Puntero láser</b><span class="g-keys"><kbd>Alt</kbd><kbd>R</kbd></span><p>Un punto rojo que sigue al puntero, para señalar algo en una videollamada. No deja marca. <kbd>Esc</kbd> sale.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Modo oscuro</b><p>Casilla «Modo oscuro» de la barra: papel y trazos en versión oscura, solo en el cuaderno abierto. Lo guardado no cambia.</p></div></div>
+      </section>
+
+      <section class="g-sec" id="g-share" role="tabpanel" hidden>
+        <div class="g-row"><div class="g-main"><b>Copiar como imagen</b><span class="g-keys"><kbd>Alt</kbd><kbd>C</kbd></span><p>Deja la hoja activa en el portapapeles, lista para pegar.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Compartir imagen</b><p>Abre el menú de compartir del sistema (AirDrop, Mensajes, Mail…) donde el navegador lo permita.</p></div></div>
+        <div class="g-row"><div class="g-main"><b>Exportar</b><p>Imagen PNG de una hoja o de las dos a la vista, archivo de hoja (JSON) e importar una hoja.</p></div></div>
+      </section>
+
+      <section class="g-sec" id="g-perf" role="tabpanel" hidden>
+        <div class="g-row"><div class="g-main"><b>Modo ahorro</b><p>Dibuja las hojas con menos resolución y la mitad de memoria de lienzos. Úsalo en equipos modestos o con hojas muy cargadas; a cambio, el trazo se ve algo menos nítido en pantallas retina.</p></div><label class="g-ctl check"><input type="checkbox" id="gEco"> <span>Activo</span></label></div>
+        <div class="g-row"><div class="g-main"><b>Recursos</b><p>El botón «Recursos» (abajo a la izquierda) muestra en vivo la memoria y el procesador que usa la app, con consejos.</p></div></div>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Puntero láser (solo existe mientras está activo) -->
+  <canvas class="laser" id="laserCanvas" aria-hidden="true" hidden></canvas>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/text.js"></script>
+  <script src="js/paper.js"></script>
+  <script src="js/shapes.js"></script>
+  <script src="js/ink.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/boxes.js"></script>
+  <script src="js/sheet.js"></script>
+  <script src="js/carousel.js"></script>
+  <script src="js/outline.js"></script>
+  <script src="js/laser.js"></script>
+  <script src="js/joystick.js"></script>
+  <script src="js/ruler.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
